@@ -1,0 +1,45 @@
+?start: expa
+
+?expa: "\\" NAME "." exp             -> lam
+      | "if" exp "then" exp "else" exp  -> ifelse
+      | "let" NAME "=" exp "in" exp     -> let
+      | "letrec" NAME "=" exp "in" exp  -> letrec
+      | "fix" exp                       -> fix
+      | exp
+?exp: exp "<=" exp1                 -> leq   
+      | exp "==" exp1               -> eq
+      | exp1
+?exp1: exp1 "+" exp2                -> plus 
+      | exp2
+?exp2: exp2 "-" exp3                -> minus
+      | exp3
+?exp3: "-" exp3                     -> neg
+      | exp4
+?exp4: exp4 exp5                    -> app
+      | exp5
+?exp5: exp5 "*" exp6                -> multiply
+      | exp6
+?exp6: exp6 "/" exp7                -> divide
+      | exp7
+?exp7: exp7 "^" exp8                -> power
+      | exp8
+?exp8: "log" exp8 "base" exp9       -> log
+      | exp9
+      | "hd" exp9                    -> hd
+      | "tl" exp9                    -> tl
+?exp9: NAME                         -> var
+      | "#"                         -> nil
+      | exp9 ":" exp9               -> cons
+      | NUMBER                      -> num
+      | exp9 ";;" exp9              -> prog
+      | "(" exp9 ")"                -> parens
+NAME: /[a-z_][a-zA-Z0-9_]*/         # names cannot start with upper case
+
+COMMENT: /--[^\n]*/                 // comments start with --
+%ignore COMMENT
+%import common.WS
+%import common.NUMBER
+%ignore WS
+
+%ignore /\/\/[^\n]*/  
+%ignore /\/\*[\s\S]*?\*\//  

@@ -1,0 +1,10 @@
+/*
+Here you can put a program to test the interpreter.
+Outside the comments only one program is allowed.
+*/
+
+// (\x.x)a 
+
+//if 1 then 2 else 3
+
+1 ;; 2
