@@ -1,0 +1,931 @@
+\documentclass{article}
+
+\usepackage{tikz} 
+\usetikzlibrary{automata, positioning, arrows} 
+
+\usepackage{amsthm}
+\usepackage{amsfonts}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{fullpage}
+\usepackage{color}
+\usepackage{parskip}
+\usepackage{hyperref}
+\usepackage{qtree}
+\usepackage{mathabx}
+\usepackage{lmodern}
+\usepackage{embedfile}
+\usepackage{navigator}
+\usepackage{ragged2e}
+\usepackage{hyperref}
+\usepackage[T1]{fontenc}
+  \hypersetup{
+    colorlinks = true,
+    urlcolor = blue,       % color of external links using \href
+    linkcolor= blue,       % color of internal links 
+    citecolor= blue,       % color of links to bibliography
+    filecolor= blue,        % color of file links
+    }
+    
+\usepackage{listings}
+
+\embeddedfile{substitution}{substitution.hs}
+
+
+\definecolor{dkgreen}{rgb}{0,0.6,0}
+\definecolor{gray}{rgb}{0.5,0.5,0.5}
+\definecolor{mauve}{rgb}{0.58,0,0.82}
+
+\lstset{frame=tb,
+  language=haskell,
+  aboveskip=3mm,
+  belowskip=3mm,
+  showstringspaces=false,
+  columns=flexible,
+  basicstyle={\small\ttfamily},
+  numbers=none,
+  numberstyle=\tiny\color{gray},
+  keywordstyle=\color{blue},
+  commentstyle=\color{dkgreen},
+  stringstyle=\color{mauve},
+  breaklines=true,
+  breakatwhitespace=true,
+  tabsize=3
+}
+
+\newtheoremstyle{theorem}
+  {\topsep}   % ABOVESPACE
+  {\topsep}   % BELOWSPACE
+  {\itshape\/}  % BODYFONT
+  {0pt}       % INDENT (empty value is the same as 0pt)
+  {\bfseries} % HEADFONT
+  {.}         % HEADPUNCT
+  {5pt plus 1pt minus 1pt} % HEADSPACE
+  {}          % CUSTOM-HEAD-SPEC
+\theoremstyle{theorem} 
+   \newtheorem{theorem}{Theorem}[section]
+   \newtheorem{corollary}[theorem]{Corollary}
+   \newtheorem{lemma}[theorem]{Lemma}
+   \newtheorem{proposition}[theorem]{Proposition}
+\theoremstyle{definition}
+   \newtheorem{definition}[theorem]{Definition}
+   \newtheorem{example}[theorem]{Example}
+\theoremstyle{remark}    
+  \newtheorem{remark}[theorem]{Remark}
+
+\title{CPSC-354 Report}
+\author{Liana Ikoyan  \\ Chapman University}
+
+\date{\today} 
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+This report is a compilation of lessons learned, technical and otherwise, from the CPSC 354 Programming Languages course. 
+We started off by learning the discrete math and proofs behind programming languages. Then we covered Context-Free Grammars before moving into learning concepts in Lambda Calculus. Using each concept 
+we slowly added more to our programming language project, before finalizing it with concepts of Abstract Reduction Systems, Fixed Point Conversions, and String Rewriting. With 
+the programming language completed, I reflected on the technical details I learned from the project and what lessons I could take away from the course overall.
+\end{abstract}
+
+\setcounter{tocdepth}{3}
+\tableofcontents
+
+\section{Introduction}\label{intro}
+
+Grading  guidelines (see also below):
+\begin{itemize}
+\item Is typesetting and layout professional? 
+\item Is the technical content, in particular the homework, correct?
+\item Did the student find interesting references~\cite{bla} and cites them throughout the report?
+\item Do the notes reflect understanding and critical thinking?
+\item Does the report contain material related to but going beyond what we do in class?
+\item Are the questions interesting?
+\end{itemize}
+
+Do not change the template (fontsize, width of margin, spacing of lines, etc) without asking your first.
+
+\section{Week by Week}\label{homework}
+
+\subsection{Week 1}
+
+\subsubsection{Notes}
+
+Week 1 was dedicated to introducing the expectations and subject matter of the course, as well as covering the very basic foundations of discrete mathematics.
+
+\hspace{0.65cm}Computer programming languages are an intersection between mathematics
+and software engineering. For the first few weeks we will cover the discrete math portion. 
+This week was a review of the basic concepts of descrete math:
+
+\begin{itemize}
+\item(Equivalence Class): It is possible to have different representations of the same data.
+For example, (n,m) = n-m can be represented by different pairs such as (1,2), (0,1), and (10,11). All of the will output the same value of -1.
+When you build up abstractions, the process of declaring lots of things to be equal, you have an equivalence class, or equivalence relation.
+
+\item(Notations): There are advantages and disadvantages of representing data as binary versus urnary (successor) notation.
+Binary is much more consice and efficient, but is more challengeing to add and subtract. On the other hand, urnary notation
+is better suited for proofs by induction and proving the correctness of algorithms. It uses successors of zero or other numbers to 
+represent data.
+
+\item(Writing proofs): Lean is a programming lanugage where everything is a proof, and proofs can be programmed into the code. 
+The program itself is not writing the proof but the language allows programmers to write a program as a proof. This is not for automated 
+theorem proofing but serves as an interactive theorem prover or proof assistent.
+\\
+\end{itemize}
+
+\hspace{0.65cm}I did some research on the way math and computer science intersects and found that there are many aspects of computer science, such as machine learning, algorithms, and numerical analysis that rely on mathematical concepts, 
+allowing us to do things we do with technology \hyperref[1]{[1]}. Therefore, it seems important to study the underlying math. 
+
+\hspace{0.65cm}We also covered the basics of the Lean language, learning to work toward the conclusion/goal from the assumption or vice versa using proofs, theorems, and tools such as:
+
+\begin{itemize}
+\item rfl (reflexive): the proof that anything equals anything, ie x = x
+\item rw (rewrite): substitutes the given proof, assumption, or other tool where the program finds the first instance to substitute
+\item one\_eq\_succ\_zero: 1 = S0, the definition of 1
+\item two\_eq\_succ\_one: 2 = S1, the defintion of 2
+\item opposite side arrow: using l + space to insert an arrow indicating a change to the right side instead of the left
+\end{itemize}
+
+\subsubsection{Homework}
+
+Lessons 5-8 were completed in the Natural Number Game. The goal of lesson 5 was to proof the following:
+\begin{center}
+  a + (b + 0) + (c + 0) = a + b + c
+\end{center}
+The solution was to use the add-zero theorem which states that anything added to zero equals itself, ie a + 0 = a. With this theorem I could arrive at the solution:
+\begin{verbatim}
+                                    rw [add_zero] 
+                                    rw [add_zero] 
+                                    rfl
+\end{verbatim}
+This proof uses the algorithm of addition to show that for any natural number m, m + 0 = m.
+
+Lesson 6 had the same goal but asked for more precise rewrites. Specifying which variables to rewrite, I arrived at the solution:
+\begin{verbatim}
+                                    rw [add_zero c]
+                                    rw [add_zero b]
+                                    rfl
+\end{verbatim}
+Lesson 7 asked for a proof of the goal:
+\begin{center}
+      succ n = n + 1
+\end{center}
+For this lesson, I had to use the theorem for the definition of 1, one-eq-succ-zero, to rewrite 1 as succ 0. Then I used the addition theorem add-succ to add the two factors together, followed by the add-zero theorem, arriving at the solution:
+\begin{verbatim}
+                                    rw [one\_eq\_succ\_zero] 
+                                    rw [add\_succ] 
+                                    rw [add\_zero] 
+                                    rfl
+\end{verbatim}
+Lesson 8 was the final challenge, asking me to prove that 2 + 2 = 4. \\\\
+I first had to rewrite each 2 as succ (succ 0), then combined them together as a single chain of successors. I did the same to the other side, rewriting four as a chain of successors, and finally used the reflexive theorem to conclude both sides as the same: 
+\begin{verbatim}
+                                    rw [two_eq_succ_one] 
+                                    rw [one_eq_succ_zero]
+                                    rw [add_succ]
+                                    rw [add_succ] 
+                                    rw [add_zero]
+                                    rw [four_eq_succ_three]
+                                    rw [three_eq_succ_two] 
+                                    rw [two_eq_succ_one] 
+                                    rw [one_eq_succ_zero] 
+                                    rfl
+\end{verbatim}
+
+\subsubsection{Comments and Questions}
+
+It is interesting how even a simple elementary equation like 2 + 2 = 4 can have a much more complicated mathematical foundation. 
+The majority of people, even those who work with math on a daily basis, will never have to consider numbers from the perspective of successors or confront the 
+underlying theories that allow us to do so much with simple operations like addition.
+
+\hspace{0.65cm}The majority of the proofs and theorems we have covered so far use natural numbers as the basis for operations. Successor notation itself seems to start at zero and move only in the positive direction.
+How does discrete math take negative numbers, or more complicated concepts like imaginary numbers into account? Are those numbers even relevant in this sector of mathematics, and if no, why would they not be?
+
+
+\subsection{Week 2}
+
+\subsubsection{Notes}
+
+First we went over translating math proofs into lean. We discussed how math is almost but not quite a programming language 
+so you have to compromise with the syntax. There is a process of translating between the math and lean counterparts of proof definitions.
+For example:
+
+\hspace{7cm}def 1 = one\_eq\_succ\_zero
+
+You won't always find an easy match, but math can guide you through the proof process in lean. 
+
+\hspace{0.65cm}Additionally, in lean you typically start from the conclusion and reason upwards, while in math you usually 
+go the opposite way.
+
+\hspace{0.65cm}We also introduced induction as a tool in addition proofs. Natural numbers are defined by two rules: zero is a natural number, and the successor of natural number n is a natural number, the latter rule being a recursive defintion.
+Using these rules, we can get the definitions:
+
+\hspace{7cm}add(a,0) = a
+
+\hspace{7cm}add(a,Sb) = S add(a,b)
+
+By defining addition in terms of itself, we get a recursive data type. Programming languages are essentially recursive data types like these, but scaled up by several factors.
+
+\hspace{0.65cm}Finally, we covered the Tower of Hanoi problem, a common example of this topic. Assuming there are poles 0, 1, and 2 with n+1 disks that have to move from 0 to 2 without a bigger disk stacked on a small one,
+we can come up with the following pseudo code solution: 
+    \begin{verbatim}
+                                      hanoi 1 x y = move x y
+                                      hanoi (n+1) x y =
+                                            hanoi n x (other x y )
+                                            move x y 
+                                            hanoi n (other x y) y
+    \end{verbatim}
+\subsubsection{Homework}
+For homework, we completed levels 1-5 of Addition World in the Natural Number Game.\\
+
+Level 1\: The goal was to prove the zero\_add theorem, where for all natural numbers n, we have 0 + n = n. I arrived at the following solution:
+
+\begin{verbatim}
+                                      induction n with d hd
+                                      rw[add_zero]
+                                      rfl
+                                      rw[add_succ]
+                                      rw[hd]
+                                      rfl
+\end{verbatim}
+Level 2\: The goal was to prove succ\_add where for all natural numbers a, b, we have succ(a) + b = succ(a + b). I got the solution:
+\begin{verbatim}
+                                      induction b with d hd
+                                      rw[add_zero]
+                                      rw[add_zero]
+                                      rfl
+                                      rw[add_succ]
+                                      rw[hd]
+                                      rw[add_succ]
+                                      rfl
+\end{verbatim}
+
+Level 3\: I proved the theorem add\_comm, with the goal that a + b = b + a, with the following:
+\begin{verbatim}
+                                      induction a with d hd
+                                      rw[add_zero]
+                                      rw[zero_add]
+                                      rfl
+                                      rw[add_succ]
+                                      rw[succ_add]
+                                      rw[hd]
+                                      rfl
+\end{verbatim}
+
+Level 4: To prove the theorem add\_assoc, where (a + b) + c = a + (b + c), I got the following solution:
+\begin{verbatim}
+                                      induction a with d hd
+                                      rw[zero_add]
+                                      rw[zero_add]
+                                      rfl
+                                      rw[succ_add]
+                                      rw[succ_add]
+                                      rw[succ_add]
+                                      rw[hd]
+                                      rfl
+\end{verbatim}
+
+\hspace{0.65cm}This is similar solution to the mathematical proof that uses induction. It starts by proving the base case that c = 0 getting 
+\begin{center}
+  (a + b) + c = a + b = a + (b + 0) 
+\end{center}
+This can be solved with the defintion a + 0 = a, the mathematical equivalent of add\_zero. 
+Then, you prove 
+\begin{center}
+  (a + b) + c = a + (b + c) 
+\end{center}
+by starting with
+\begin{center}
+  (a + b) + S(c) 
+\end{center}
+ and using induction and a + S(b) = S(a + b), the math equivalent of add\_succ, to get 
+ \begin{center}
+  a + (b + S(c))
+ \end{center}
+
+Level 5: Without needing to use induction, I was able to prove the theorem add\_right\_comm, where (a + b) + c = (a + c) + b, with the following:
+\begin{verbatim}
+                                      rw[add_assoc]
+                                      rw[add_assoc]
+                                      rw[add_comm c]
+                                      rfl
+\end{verbatim}
+
+\subsubsection{Comments and Questions}
+
+I found the Tower of Hanoi problem to be really interesting, but found it hard understanding the pseudo code that could be used 
+to solve not just a three-disk stack, but be applied to taller and taller stacks. When I tried playing the game with more disks, I found it increasingly difficult, 
+until I reached 6 disks and found that I could not win.
+\hspace{0.65cm}I looked into this further, and while I could not find pseudo of the algorithm, I found an article that used mathematic concepts to create as efficient of an algorithm as 
+possible with a modified version of the magnetic Tower of Hanoi \hyperref[2]{[2]}. This demonstrates how, as mentioned in the previous week, 
+math is an important part of the concepts we cover in computer science, so it is important that we do not overlook these mathematical algorithms.
+
+\hspace{0.65cm}We mentioned in class how recursive data types can be scaled up to serve as the 
+foundation for programming languages. 
+How much did this concept play a role in the creation of programming languages we use today? How big of a role do these discrete mathematical concepts
+play in the field of computer science as a whole?
+
+%(Delete:) Week 2 (and all the other weeks) should follow the same pattern as Week 1. Even if there is a week without homework, notes and comments (see above) are still expected.
+
+\subsection{Week 3}
+
+\subsubsection{Homework}
+
+This week was spent working on a literature review using LLMs. I used ChatGPT -4 to explore the question of how hardware advancements have effected the development of programming langauges. The summary of the review is as follows:
+
+
+\hspace{0.65cm}Using ChatGPT, I explored the topic of how hardware and computation advancements affect the development of programming languages.
+I looked into the effects of recent advancements of modern hardware over the last few decades, as well as effects of future advancements of
+quantum computing. 
+For the former, I found that we have been able to 
+greatly expand our programming capabilities through our improved hardware. 
+Beyond basic speed and optimization increases, improved hardware has allowed 
+for more complex abstractions and programming constructions without suffering 
+performance issues, given us more sophisticated methods of memory management that
+ make languages like Java and C\# viable, and many more benefits for efficiency and ease 
+ of use. This got me wondering how programming languages would be affected by the advancement
+  of quantum computing. While quantum capabilities would likely improve performance and
+   calculation abilities, it  would require many new models, languages, standardizations, 
+   methods of error handling, and educational tools to transition from classical to quantum 
+   programming. Thanks to extensive research contributions over the years from David Deutsch,
+    Richard Feynman, and many other researchers, we are already working to create the tools and
+     standards necessary for quantum programming.\\
+     \href{https://github.com/likoyan727/LitReview/blob/main/README.md}{(Link to the README.md file)}
+
+\hspace{0.65cm}I posted the summary and link on Discord under the username LianaI and voted for two other submissions on Monday. The two submissions I voted for were
+\href{https://github.com/gabedvdsn/LLMLitReview/edit/main/README.md}{Gabriel Davidson's review} 
+ and 
+\href{https://github.com/PyroFlareX/LLM-Lit_Review }{Zack Dell's review}. 
+
+\subsection{Week 4}
+\subsubsection{Homework}
+Week 4 was spent exploring Context-Free Grammar and how it could be used to represent parsing trees.
+These trees are built on grammar rules such as EXP : EXP '+' EXP1 that dictate the order in which numbers and operations can be addressed. We created trees for five different expressions following the CFG:
+\begin{verbatim}
+                                      EXP : EXP '+' EXP1
+                                      EXP1 : EXP1 '*' EXP2
+                                      EXP2 : Integer
+                                      EXP2 : '(' EXP ')'
+                                      EXP : EXP1
+                                      EXP1 : EXP2
+                                      Integer : '1','2','3','4','5','6'
+\end{verbatim}
+Using this grammar, I was able to represent the following expressions with trees:
+\subsubsection*{a: 2 + 1}
+
+\begin{center}
+\includegraphics*[scale=0.13]{treeA.jpg}
+\end{center}
+
+\subsubsection*{b: 1 + 2 * 3}
+
+\begin{center}
+  \includegraphics*[scale=0.1]{treeB.jpg}
+  \end{center}
+
+\subsubsection*{c: 1 + (2 * 3)}
+
+\begin{center}
+  \includegraphics*[scale=0.1]{treeC.jpg}
+  \end{center}
+
+\subsubsection*{d: (1 + 2) * 3}
+
+\begin{center}
+  \includegraphics*[scale=0.1]{treeD.jpg}
+  \end{center}
+
+\subsubsection*{e: 1 + 2 * 3 + 4 * 5 + 6}
+
+\begin{center}
+  \includegraphics*[scale=0.15]{treeE.jpg}
+  \end{center}
+
+\subsubsection{Comments and Questions}
+I found the translation process between mathematical expressions and the context-free grammar to be really fun. It is interesting just how much you can
+break down simple math into complex structures and algorithms.
+
+\hspace{0.65cm}So far we have used context-free grammar to redefine concrete 
+syntax in order to parse mathematical expressions into abstract 
+syntax trees. How far could we push the concept of a CFG beyond 
+simple expressions like EXP -> EXP1, and using different CFGs, 
+how many different types of information could we redefine 
+(ex concrete English grammar)?
+
+\subsection{Week 5}
+\subsubsection{Notes}
+
+This week we covered Lean programming. We went over the concept of expressing ideas as propositions, and finding evidence to support them. The logic of the ideas in itself is not complicated, 
+but the point was to learn how to express basic ideas through the more complex syntax of a programming language like Lean. We covered conjuctions using the $\wedge$ character to represent the concept of "and".
+
+\hspace{0.65cm}We also covered the LARL, a type of parser tree for Lark. They are an efficient class of parsers that work from left to right, symbol to symbol. You can traverse a tree by either reducing (moving up) or shifting 
+(moving right), and moving forward until there is a conflict.
+
+\subsubsection{Homework}
+
+For homework, we completed lessons 1-8 of A Lean Intro to Logic. The problems, and subsequent solutions, are as follows:
+
+\begin{list}{}{A Lean Intro to Logic:}
+  \item{1.} example (P : Prop)(todo\_list : P) : P := by
+
+  \hspace{6cm}exact todo\_list
+
+  \item {2.} \text{example (P S : Prop)(p: P)(s : S) : P $\wedge$ S := by}
+  
+  \hspace{6cm}exact and\_intro p s
+  
+  \item {3.} example (A I O U : Prop)(a : A)(i : I)(o : O)(u : U) : (A $\wedge$ I) $\wedge$ O $\wedge$ U := by
+  
+  \hspace{6cm}exact and\_intro (and\_intro a i) (and\_intro o u)
+  
+  \item {4.} example (P S : Prop)(vm: P $\wedge$ S) : P := by
+  
+  \hspace{6cm}exact vm.left 
+  
+  \item {5.} example (P Q : Prop)(h: P $\wedge$ Q) : Q := by
+  
+  \hspace{6cm}exact h.right
+  
+  \item {6.} example (A I O U : Prop)(h1 : A $\wedge$ I)(h2 : O $\wedge$ U) : A $\wedge$ U := by 
+  
+  \hspace{6cm}have a := h1.left
+
+  \hspace{6cm}have u := h2.right
+
+  \hspace{6cm}exact ⟨ a , u ⟩ 
+  
+  \item {7.} example (C L : Prop)(h: (L $\wedge$ (((L $\wedge$ C) $\wedge$ L) $\wedge$ L $\wedge$ L $\wedge$ L)) $\wedge$ (L $\wedge$ L) $\wedge$ L) : C := b
+  
+  \hspace{6cm}exact h.left.right.left.left.right
+  
+  \item {8.} example (A C I O P S U : Prop)(h: ((P $\wedge$ S) $\wedge$ A) $\wedge$ ¬I $\wedge$ (C $\wedge$ ¬O) $\wedge$ ¬U) : A $\wedge$ C $\wedge$ P $\wedge$ S := by
+
+    \hspace{6cm}have a := h.left.right
+
+    \hspace{6cm}have c := h.right.right.left.left
+
+    \hspace{6cm}have p := h.left.left.left
+
+    \hspace{6cm}have s := h.left.left.right
+
+    \hspace{6cm}exact ⟨ a, ⟨ c , ⟨ p , s ⟩ ⟩ ⟩
+
+  This can be rewritten in the form of a mathematical proof:
+  \begin{center}
+    \begin{list}{}{}
+      \item{(1)} (h: ((P $\wedge$ S) $\wedge$ A) $\wedge$ ¬I $\wedge$ (C $\wedge$ ¬O) $\wedge$ ¬U) \hspace{1cm}assumption
+      \item{(2)} a \hspace{1cm} and\_left (1)
+      \item{(3)} a \hspace{1cm} and\_right (2)
+      \item{(4)} c \hspace{1cm} and\_right (1)
+      \item{(5)} c \hspace{1cm} and\_right (4)
+      \item{(6)} c \hspace{1cm} and\_right (5)
+      \item{(7)} c \hspace{1cm} and\_left (6)
+      \item{(8)} c \hspace{1cm} and\_left (7)
+      \item{(9)} p \hspace{1cm} and\_left (1)
+      \item{(10)} p \hspace{1cm} and\_left (9)
+      \item{(11)} p \hspace{1cm} and\_left (10)
+      \item{(12)} s \hspace{1cm} and\_left (1)
+      \item{(13)} s \hspace{1cm} and\_left (12)
+      \item{(14)} s \hspace{1cm} and\_right (13)
+      \item{(15)} A $\wedge$ C $\wedge$ P $\wedge$ S \hspace{1cm} and\_intro ((3) and\_intro ((8) and\_intro ((11) (14))))
+    \end{list}
+  \end{center}
+\end{list}
+
+\subsubsection{Comments and Quesitons}
+It's always interesting and a little confusing to me when the same expression can be represented in different formats. For example, 
+the Lean problems can be presented as one long expression broken up by parentheses
+and colons, but can also be written as separate expressions specifiying the type, such as an object, assumption, or goal.  
+
+\hspace{0.65cm}I noticed while doing the homework that there is different syntax to represent the same expression. For example, you could either write and\_left h or h.left, with the latter being more efficient for representing deeply nested data. What is the purpose of having multiple syntax types for the same idea, especially if one is less efficient than the other? Is there a difference in how these syntax rules are represented in the logic of the programming language?
+
+\hspace{0.65cm}After asking this question I did some research and found an interesting article from Princeton which dives into the nuances of syntax and semantics \hyperref[3]{[3]}. It discusses the concepts of context-free and context-sensitive syntax that we have covered so far, and gives me a better understanding of where these different syntaxes come from \hyperref[3]{[3]}.
+
+\subsection{Week 6}
+\subsubsection{Notes}
+This week we covered the dependently typeed programming language Lean, and used it to program Lambda calculus, 
+the smallest programming language in the world. Using just functions and variables we can represent concepts on a single line with the keyword "exact".
+
+\hspace{0.65cm}We covered specific syntax for Lambda calculus, starting with the arrow $\rightarrow$. Writing bakery\_service P $\rightarrow$ C can be read as "If P then C". bakery\_service is a function of P that gives C, so to get C we can write 
+
+\hspace{7cm}exact bakery\_service p
+
+\hspace{0.65cm}We need syntax to make functions. In math, that syntax typically looks like f(x) = x+2. But in Lambda calculus functions do not have names, you simply indicate what maps to what. For example, you can write
+
+\hspace{7cm}x $\mapsto$ x+2 or $\lambda$ x : x+2
+
+\hspace{0.65cm}Parentheses are also important, as with the case of "currying" for equations like 
+
+\hspace{7cm}(C $\wedge$ D) $\rightarrow$ S = C $\rightarrow$ (D $\rightarrow$ S)
+
+\hspace{0.65cm}We also covered the theory of substitution, where different expressions can be substituted into a function in order to simplify and reduce expressions.
+
+\subsubsection{Homework}
+For homework we completed problems 1-9 of the Lean Logic implication world. I arrived at the following solutions:
+\begin{list}{}{A Lean Intro to Logic:}
+  \item{1.} example (P C: Prop)(p: P)(bakery\_service : P $\rightarrow$ C) : C := by 
+      
+  \hspace{6cm}exact bakery\_service p 
+
+  \item {2.} example (C: Prop) : C $\rightarrow$ C := by
+  
+\hspace{6cm}exact $\lambda$c:C $\mapsto$ c:C
+
+  \item {3.} example (I S: Prop) : I $\wedge$ S $\rightarrow$ S $\wedge$ I := by
+
+\hspace{6cm}exact $\lambda$ (h : I $\wedge$ S) $\mapsto$ ⟨ h.right , h.left ⟩ 
+ 
+  \item {4.} example (C A S: Prop) (h1 : C $\rightarrow$ A) (h2 : A $\rightarrow$ S) : C $\rightarrow$ S := by
+ 
+  \hspace{6cm} exact $\lambda$ c $\mapsto$ h2 (h1 c)
+ 
+  \item {5.} example (P Q R S T U: Prop) (p : P) (h1 : P $\rightarrow$ Q) (h2 : Q $\rightarrow$ R) (h3 : Q $\rightarrow$ T) (h4 : S $\rightarrow$ T) (h5 : T $\rightarrow$ U) : U := by
+  
+  \hspace{6cm} have q := h1 p     
+
+  \hspace{6cm} have t := h3 q  
+
+  \hspace{6cm} exact h5 t     
+
+\end{list}
+
+\subsubsection{Comments and Questions}
+I find it interesting that there are entire subsections of math dedicated to representing functions as small as possible. I did a little more research on the concept of lambda calculus and found an article discussing the issue of 
+"integrating non-functional aspects into functional programming langauges", explaining how higher-level programming langauges run into these problems, and how a language like lambda calculus can remedy these issues \hyperref[4]{[4]}.
+ Addmittedly, it confused me why such a small and seemingly limited language would even be relevant today. But I realize now how that simplicity and elegance can be beneficial for many computer science problems.
+
+\hspace{0.65cm}With so many ways to represent functions, how does the method we choose affect how we perceive them? For example, would a problem seem easier to solve if represented in Lambda vs standard math notation?
+
+
+\subsection{Week 7}
+
+\subsubsection{Notes}
+For this week, we continued to cover lambda calculus, focusing on using substitutions to reduce a lambda term. We covered the concept of beta reductions, and how functions are defined in lambda calculus
+using the scope of parentheses. Anything defined within the scope of a function is part of the function, and anything outside of its closed parentheses is the argument. Using this, you can substitute the argument for 
+every instance of the variable within the function definition in order to reduce the function. 
+
+\subsubsection{Homework}
+For homework I reduced the given lambda term and got the following solution after 7 reductions: 
+
+\begin{verbatim}
+                        ((\m. \n. m n) (\f. \x. f (f x))) (\f. \x. f (f (f x))) 
+\end{verbatim}
+
+\paragraph{Solution:} \openfilelink{substitution.hs}{*Link to the embedded file \texttt{substitution.hs}*}
+
+\hspace{0.65cm}Additionally, we discussed what function on natural numbers ($\backslash$m. $\backslash$n. m n) implements. Essentially, this term takes a function m and an element n and applies m to n.
+
+\subsubsection{Comments and Questions}
+When doing the homework I noticed how long and messy a lambda expression can get after just a few beta reductions. How do we strike a balance between the effectiveness of a program and the neatness/readability of its syntax? 
+
+\subsection{Weeks 8-9}
+
+\subsubsection{Notes}
+For week 8 we discussed normal forms, where an expression cannot be reduced any further, and then applied this to our programming assignment.
+
+\subsubsection{Homework}
+For weeks 8 and 9 we worked on exercises 2-8 to practice lambda calculus in python, specifically normalizing expressions.
+
+\hspace{0.65cm}For exercise 2 I ran some of the previous programs in test.lc and ran pyton interpreter.py test.lc. When the program ran a b c d it produced (((a b) c) d) but produced a when it ran (a). The latter case 
+is because a has no function or argument, therefore can be reduced with no parentheses. Meanwhile, a b c d 
+function like arguments and therefore have to be separated into different sections with parentheses.
+
+\hspace{0.65cm}For exercise 3 I ran test cases to test the implementation of capture avoiding substitution, which is when the original meaning
+of an expression is changed. I tested one expression ($\backslash$f.f f) g, which produced (g g), and then 
+($\backslash$f.f t) which produced (g t). This shows how you have to use unique names for different variables to avoid them
+being captured by a lambda abstraction.
+
+\hspace{0.65cm}For exercise 4, I found that not all expressions reduce to the expected result. Some seem to evaluate to an expression that includes Var1 or something similar.
+
+\hspace{0.65cm}For exercise 5, I found ($\backslash$f.$\backslash$x.f) ($\backslash$f.x) which reduces to ($\backslash$Var1.($\backslash$f.x))
+
+\hspace{0.65cm}For exercise 6, I launched the python debugger and went through the steps of the interpreter.
+
+\hspace{0.65cm}For exercise 7, I tested the given expression using a debugger, adding breaks at each substitute() function call and using the linearize() function in the debugger to see the AST output. The results were the following:\\
+
+\begin{verbatim}
+   \Var5.((\f.(\\x.(f (f (f x))))) ((\f.(\x.(f (f (f x))))) Var5))
+  \end{verbatim}
+
+\begin{verbatim}
+   (\f.(\x.(f(f x))))
+  \end{verbatim}
+
+  \begin{verbatim}
+    (\f.(\x.(f (f (f x)))))
+   \end{verbatim}
+
+   \begin{verbatim}
+    (\x.(f(f x)))
+   \end{verbatim}
+
+   \begin{verbatim}
+    (f (f x))
+   \end{verbatim}
+
+   \begin{verbatim}
+    (f x)
+   \end{verbatim}
+
+   \begin{verbatim}
+    (f Var3)
+   \end{verbatim}
+
+   \begin{verbatim}
+    (\f.(\x.(f ( f(f x)))))
+   \end{verbatim}
+
+   \begin{verbatim}
+    (Var2 (Var2 Var3))
+   \end{verbatim}
+
+   \begin{verbatim}
+    (Var2 Var3)
+   \end{verbatim}
+
+   \begin{verbatim}
+    (Var2 Var4)
+   \end{verbatim}
+
+   \begin{verbatim}
+    (\f.(\x.(f ( f(f x)))))
+   \end{verbatim}
+
+   \begin{verbatim}
+    (\Var4.(Var2 (Var2 Var4)))
+   \end{verbatim}
+
+   \begin{verbatim}
+    (\f.(\x.(f ( f (f x)))))
+   \end{verbatim}
+  
+   \begin{verbatim}
+    (\Var5.( \f.(\x.(f ( f (f x)))))) ((\f. (\x. (f ( f (f x))) Var5)))
+   \end{verbatim}
+
+\hspace{0.65cm}For exercise 8, I followed a similar process, this time putting breaks at each call of the evaluate() function, its return statements, or calls to the substitute() function and seeing what the debugger outputted for the variables. The results were as follows: \\
+
+\begin{verbatim}
+  13. eval (\\x.x) a\n// (\\x.\\y.x) a b\n// (\\x.\\y.y) a b\n// ((\\m.\\n. m n) 
+  (\\f.\\x. f (f x))) (\\f.\\x. f (f (f x))) \n\n(((\\m.(\\n.(m n))) (\\f.(\\x.(f (f x))))) 
+  (\\f.(\\x.(f x))))
+ \end{verbatim}
+
+\begin{verbatim}
+  39. eval ('app', ('app', (...), (...)), ('app', (...), (...)))
+\end{verbatim}
+
+\begin{verbatim}
+  39. ('app', ('lam', 'x', (...)), ('var', 'a'))
+\end{verbatim}
+
+\begin{verbatim}
+  53. return ('lam', 'x', ('var', 'x'))
+\end{verbatim}
+
+\begin{verbatim}
+  44. sub body = ('var', 'x'), name = 'x', arg = ('var', 'a')
+\end{verbatim}
+
+\begin{verbatim}
+  45. eval ('var', 'a')
+\end{verbatim}
+
+\begin{verbatim}
+  53. ('var', 'a')
+\end{verbatim}
+
+\begin{verbatim}
+  53. ('var', 'a')
+\end{verbatim}
+
+\begin{verbatim}
+  48. eval result = 'app', e1 = ('var', 'a'), 
+  tree = ('app', ('app', (...), (...)), ('app', (...), (...)))
+\end{verbatim}
+
+\begin{verbatim}
+  53. return ('app', ('var', 'a'), ('app', (...), (...)))
+\end{verbatim}
+
+\begin{verbatim}
+  (a (((\m.(\n.(m n))) (\f.(\x.(f (f x))))) (\f.(\x.(f x)))))
+\end{verbatim}
+
+\subsubsection{Comments and Questions}
+
+For week 8, would there be a cleaner way to automate lambda reduction? For week 9, is there any way to iterate on these lambda calculus algorithms to make them more efficient or accurate?
+
+\subsection{Week 10}
+
+\subsubsection{Notes}
+This week we discussed algorithms and went over the concepts of confluence, termination, and (unique) normal forms. We used the bubble sort as an example of confluence, to explain how 
+we need an algorithm that always produces the same output for a given input, making it predictable and reliable. Additionally we discussed termination, where the algorithm will end eventually. In order to determine this,
+the "size" of the data needs to be defined, as well as proof that the "size" descreases with each loop. We also went over the syntax of the star arrow, what mathemeticians call the reflexive and transitive closure of ->.
+
+\subsubsection{Homework}
+We continued working on the prgramming assignment and concepts from weeks 8 and 9. We were asked to reflect on our experience with the previous homework and with programming assignment 3. 
+
+\hspace{0.65cm}1. I found the most challenging part of the homework to be trying to understand the theory behind the code 
+and how to interpret the functions. Once I figured that out I found working with it significantly easier.
+
+\hspace{0.65cm}2. In order to come up with how to solve Assignment 3 I had to understand what each function was doing and use the debugger to understand where the output was wrong.
+
+\hspace{0.65cm}3. I think it is interesting how we can take syntaxes that seem so imcompatible with programming languages and turn them into a working program, even down to the little details of how variables are processed. It really shows the power of coding and programming languages in general. 
+
+\subsubsection{Comments and Questions}
+Are we only considering these qualities of an algorithm in a vacuum? Would there not be other factors that could effect the predicatbility and performance, or is the underlying logic immune to external, unpredicatble factors?
+
+\subsection{Week 11}
+
+\subsubsection{Notes}
+For week 11 we covered the concept of abstract reduction systems and explored how to interpret and solve them. These systems only require the reduction of strings rather than an entire tree, allowing us 
+to study its properties such as its normal form and whether or not it terminates. 
+
+\subsubsection{Homework}
+I drew pictures of 7 ARSs as shown below:
+
+\subsubsection*{1. A = $\left[\right]$}
+
+\begin{center}
+  \includegraphics*[scale=0.3]{ars1.jpg}
+  \end{center}
+
+\subsubsection*{2. A = $\left[a\right]$ and R = $\left[\right]$}
+
+  \begin{center}
+    \includegraphics*[scale=0.3]{ars2.jpg}
+    \end{center}
+
+\subsubsection*{3. A = $\left[a\right]$ and R = $\left[(a,a)\right]$}
+
+  \begin{center}
+    \includegraphics*[scale=0.25]{ars3.jpg}
+    \end{center}
+
+  \subsubsection*{4. A = $\left[a,b,c\right]$ and R = $\left[(a,b),(a,c)\right]$}
+
+    \begin{center}
+      \includegraphics*[scale=0.25]{ars4.jpg}
+      \end{center}
+
+  \subsubsection*{5. A = $\left[a,b\right]$ and R = $\left[(a,a),(a,b)\right]$}
+
+      \begin{center}
+        \includegraphics*[scale=0.2]{ars5.jpg}
+        \end{center}
+
+  \subsubsection*{6. A = $\left[a,b,c\right]$ and R = $\left[(a,b),(b,b),(a,c)\right]$}
+
+        \begin{center}
+          \includegraphics*[scale=0.2]{ars6.jpg}
+          \end{center}
+
+  \subsubsection*{7. A = $\left[a,b,c\right]$ and R = $\left[(a,b),(b,b),(a,c),(c,c)\right]$}
+
+          \begin{center}
+            \includegraphics*[scale=0.2]{ars7.jpg}
+            \end{center}
+
+  I also drew examples of ARSs for each quality combination, whether it was confluent, terminating, or had a unique normal form: 
+
+  \begin{center}
+    \includegraphics*[scale=0.1]{ars-table.jpg}
+    \end{center}
+
+\subsubsection{Comments and Questions}
+Could there be any possible theorem or representation of a reduction system that allows normal forms to exist without termination? Is this impossible
+only due to the rules mathematicians have defined or is it just naturally and scientifically impossible?
+
+\subsection{Week 12}
+
+\subsubsection{Homework}
+For week 12 we covered fixed point conversions where we worked on one reduction for homework.
+My reduction for the problem "let rec fact = $\backslash$n. if n=0 then 1 else n * fact (n-1) in fact 3", following the given template, was as follows:
+
+\begin{center}
+  \includegraphics*[scale=0.15]{fixedpoint.jpg}
+  \end{center}
+
+\subsubsection{Comments and Questions}
+I found these lectures helpful for getting the basic concept, but in order to understand it on a deeper level in order to implementing the let, letrec, and fix grammar rules, I looked for some resources online. I found an interesting source explaining the concept of the Y-combinator. 
+Essentially, the concept is to add two numbers by "repeatedly taking one away from argument y and adding it to argument x until there is no more y to take" \hyperref[5]{[5]}. This explanation helped me understand the concept
+How complex can these expression reductions get before we can no longer create an algorithm that can handle them?
+
+\subsection{Week 13}
+
+\subsubsection{Notes}
+We talked about differences between programming languages, the different design decisions we make, and the criteria for those decisions, that being simplicity and naturality. 
+
+\hspace{0.65cm}We also went over induction riddles like the prisoner hat riddle, where you have to connect the past and future in order to correctly guess the hat colors. Since only nine people need to guess correctly, the first person can use their answer to instruct the rest of the people in line what 
+number of a certain hat color they should be looking for, and base their own answer on the previous answer given (the past), as well as their observations of the hats in front of them and how their answer will inform the rest of the prisoners (the future). 
+
+\hspace{0.65cm}This riddle illustrates the concept of "nested conditioning" that can open the way for breakthroughs in fields like AI and game theory \hyperref[6]{[6]}.
+
+\subsubsection{Homework}
+We continued to add to our programming language project for homework. I completed exercise 7 of the String Rewriting Exercises:
+
+\hspace{0.65cm}Considering the rules: 
+
+\begin{center}
+  ab -> a \\
+  bb -> b \\
+  aa -> b\\
+\end{center}
+and the rule that the letter order does not matter, I answered the question of what the last color would remain in an urn of 198 black "b" balls and 99 white "a" balls.
+
+\hspace{0.65cm}To solve this system, I would have to figure out the invariant, the property of the ruleset that does not change. This would be the parity of white balls, since the ab -> a rule flips the parity whenever applied, 
+and the other rules keep the parity the same. But since we start with an odd number of white balls, then assuming that the first rule is applied at least once, the parity of white balls will end up odd. And since there is an odd number of white balls, and 
+the black balls are always reduced in pairs, we will get to a point where there is a single black ball remaining at the end. Therefore, the last ball would be black.
+
+\hspace{0.65cm}When you consider this system with an unknown number of black and white balls, the color of the last ball would depend on the initial parity of the number of white balls. As explained above, starting with an odd number would 
+result in one black ball remaining, but starting with an even number would result in one white ball remaining.
+
+\subsubsection{Comments and Questions}
+
+Is there a limited number of scenarios to which these algorithms can be applied? What do we do when we encounter a problem that seemingly cannot be solved with an algorithm but complex enough that we could not solve it by hand (if such a problem exists)?
+
+\section{Lessons from the Assignments}
+
+\subsection{Introduction}
+
+I worked on each project and milestone on my own, with the exception of using Cursor AI and getting some help from the professor during office hours.
+
+\hspace{0.65cm}It hit me just how much more complicated the process of making something like a calculator would be. When trying to make it from scratch, I could only manage to create a system that 
+took a specific type of input, a pair of characters with the first being a number and the second being an operator symbol. If the input did not match this specific order then it would not work. Without the concepts we discussed in class,
+it was difficult to visualize a system that performed specific actions with a given input while still being versatile enough to take many types of input in vastly different orders.
+
+\subsection{Parsing Input}
+
+That is why I think the system of translating input into a tree is so interesting and so versatile. Addmittedly it took a while for me to understand how the 
+program worked but once I figured it out I realized how helpful of a concept it is. Being able to parse input so that it can handle any format so long as it
+ meets a grammar rule, allows for a much more versatile program. Inputs do not have to be taken in specific pairs in the way I wrote my calculator, and it has been very 
+ easy to build onto this program. Rather than having to create an entirely new program, the way I had to when I went from taking just three characters to multiple, is crucial for 
+ any longterm program, especially ones that receive frequent software updates. So I found it very helpful to learn how to parse inputs properly.
+
+\subsection{Lark Grammar}
+
+I found the lark grammar rules to be incredibly confusing at first, but once I figured out how they work I realized just how efficient and versatile they are. The way that you can 
+instruct the parser on how to parse input using this grammar, and how to enforce the precedent of operations was helpful in constructing an efficient programming language without having to create countless amounts of functions like I would have if
+if this project were built with a higher-level language. 
+
+\hspace{0.65cm}I found the ARS trees we drew in Week 4 to be especially helpful for understanding the basic concept of the grammar, as well as how to visualize it. It took me a little longer to understand the syntax of the grammar once we started 
+adding different levels, but 
+
+\subsection{Combinator}
+
+I used the concept of the Y-combinator, with the help of the Sookocheff's \hyperref[5]{[5]} explaination to understand the concept of letrec in order to implement it. Since we are writing this program only using Lambda calculus concepts, 
+having this combinator is helpful for allowing a lambda function to effectively call itself. With this, I figured out how to get it to recursively refer to itself until there is no "Y" portion left to refer to. Thus, we can have recursion in a programming langauges
+without needing to create specific recursive functions.
+
+\subsection{Operator Binding}
+When adding the rules for creating lists, I considered the way the operators associate with or "bind" to their operands. The higher the precedent level, the more closely 
+operators bind. So I considered how tightly I would want each of these operations to bind to operands in a string of input. Since the sequencing operator is a high-level operation, it has to get one of the 
+highest precedents. Nil and cons are keywords like var and num so they share the same precedent level. The remaining rules should be able to nest deeply so they would get a lower level of precedence.
+\hspace{0.65cm}It was easier to visualize this concept when reflecting on the exercises where we practiced implementing levels of precedence. Knowing how to create rules that can properly nest low level input within higher levels of input like parentheses 
+was crucial for moving on to things like sequencers.
+
+\subsection{Beta Reduction}
+Another concept that was helpful for understanding and implenting the substitute() function was the concept of beta reduction that we practiced. Knowing what should be reduced and how was helpful for constructing the substitute() function, 
+especially when considering the later rules that we add.The concept of capture-avoiding substitution is relevant here because it is important that the meaning of the initial AST should not change when substituting new values into the tree.
+
+\subsection{Normal Forms}
+Another concept we learned concerning reduction was the concept of a normal form. I think it was helpful to keep in mind how to reduce an AST down to its simplest form. Taking the exercises we did in class and for homework, I found that it was easier to understand the behavior of 
+the evaluate(), substitute(), and linearize() functions when thinking about them as expanded applications of reduction. Viewing the whole program as one large reduction system with the aim of taking an input and using the grammar rules 
+to substitute and evaluate each data type until a normal form, the final output, defintely helped me with how to approach the program as a whole.
+
+\subsection{String Reduction}
+In addition to normal AST reduction, practicing string reduction was helpful for getting used to reduction systems and being able to analyze them without the additional data creating a distraction. I found that I could understand concepts like 
+confluence much easier when the system was laid out as simply as possible.
+
+\section{Conclusion}\label{conclusion}
+
+I found it interesting just how many layers there are to programming. We are taught very early on about concepts like high- and low- level programming languages, but we're never given
+a good idea of the foundation of programming languages. This course has given me a better understanding of the theories and concepts that make up all these languages that we use. I think
+knowing these details is helpful if we were ever interested in creating languages of our own or even modifying existing ones. 
+
+\hspace{0.65cm}Additionally, from our lessons and from my research I saw how something
+as simple as lambda calculus could actually be beneficial for breaking down complex problems into their most basic elements to get a better understanding of them -- something higher-level programming languages would have a harder time achieving.
+So even if we were not planning on creating a whole new language, we could still apply the principles we learned to solve very complex problems that may come up in our future as computer scientists and
+software engineers.
+
+\hspace{0.65cm}I found it interesting when concepts I was already famililar with, like operator precedent, were explained in greater detail. The trees we drew helped me visualize the way that languages read and parse input. I found that visuals like the drawings, 
+the hanoi game, and the videos we watched made it much easier to understand the concepts we were learning, and gave me a more concrete way to think about otherwise abstract concepts. 
+
+\hspace{0.65cm}One improvement to the course would be to make clearer connections between each new lesson we learn. In hindsight, I can see how one lecture leads into the next, but experiencing the content week by week left me a little lost. I think
+focusing on reinforcing the material we have already learned while showing what problems or concepts lead to the next topic would be helpful. Or, having an overview of what we are covering before jumping in so we know what to expect ahead of time would also be helpful.
+Another improvement would be putting the concepts we learn in the scope of the programming we are familiar. While I understood the concepts individually, I still had trouble connecting them to the languages I am familiar with, so putting some more emphasis on that would help me ground these concepts better
+in my understanding of computer science. 
+  
+\begin{thebibliography}{99}
+
+\bibitem[1]{bla}\label{1} M. Krichen, \href{https://encyclopedia.pub/entry/44440}{The Interplay Between Mathematics and Computer Science}, Scholarly Community Encyclopedia, 2023.
+\bibitem[2]{bla}\label{2} Uri Levy, \href{https://arxiv.org/pdf/1003.0225}{The Magnetic Tower of Hanoi}, Atlantium Technologies, no date.
+\bibitem[3]{bla}\label{3} Author unknown, \href{https://www.cs.princeton.edu/courses/archive/spr96/cs441/notes/l1.html}{COS 441- Syntax - Feb 6, 1996}, Princeton, 1996.
+\bibitem[4]{bla}\label{4} Ugo de'Liguoro and Riccardo Treglia, \href{https://www.sciencedirect.com/science/article/pii/S030439752300395X}{From semantics to types: The case of the imperative $\lambda$-calculus}, ScienceDirect, 2023.
+\bibitem[5]{bla}\label{5} Kevin Sookocheff, \href{https://sookocheff.com/post/fp/recursive-lambda-functions/}{Recursive Lambda Functions the Y-Combinator}, Self-published, 2018.
+\bibitem[6]{bla}\label{6} A. Stuhlmüller and N.D. Goodman, \href{https://www.sciencedirect.com/science/article/pii/S1389041713000387?via%3Dihub}{Reasoning about reasoning by nested conditioning: Modeling theory of mind with probabilistic programs}, ScienceDirect, 2014.
+\end{thebibliography}
+\end{document}
+
